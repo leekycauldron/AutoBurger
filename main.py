@@ -1,8 +1,9 @@
 import pyautogui
 import cv2
 import numpy as np
-import os
-from PIL import ImageGrab
+import os, time
+from PIL import Image, ImageGrab
+
 
 textBubble1 = textBubble2 = burger1 = burger2 = burger3 = fries =  cola = done1 = None
 
@@ -30,10 +31,17 @@ if __name__ == "__main__":
     cola = pyautogui.position()
     input("Please move your cursor to the top left of the done button on the menu then press the ENTER key.")
     done1 = pyautogui.position()
-    
-    
-
-    #Take screenshots of food items and done button. This only needs to run on the first time or if the images are removed (either by user or program).
+    images = [["burger1a","burger1b","burger1c"],["burger2a","burger2b","burger2c"],["burger3a","burger3b","burger3c"],["colaa","colab","colac"],["friesa","friesb","friesc"]]
+    image_names = ["burger1","burger2","burger3","cola","fries"]
+    image_coords = {
+        "burger1": burger1,
+        "burger2": burger2,
+        "burger3": burger3,
+        "cola": cola,
+        "fries": fries
+    }
+    #CHANGED: PICTURES WILL BE PROVIDED SINCE THEY ARE DIFFICULT TO SET UP.
+    """#Take screenshots of food items and done button. This only needs to run on the first time or if the images are removed (either by user or program).
     if not os.path.isfile(os.path.join("images","burger1.jpg")): 
         burger1region = (burger1[0]-32,burger1[1]-32,burger1[0]+32,burger1[1]+32)
         img = ImageGrab.grab(burger1region)
@@ -58,37 +66,101 @@ if __name__ == "__main__":
         img.close()
     
     if not os.path.isfile(os.path.join("images","cola.jpg")): 
-        colaregion = (cola[0]-32,cola[1]-32,cola[0]+32,cola[1]+32)
+        colaregion = (cola[0]-16,cola[1]-32,cola[0]+16,cola[1]+32)
         img = ImageGrab.grab(colaregion)
         img.save(os.path.join("images", "cola.jpg"))
+        img.close()"""
+
+
+    while True:
+        # Get text bubble image
+        textBubbleregion = (textBubble1[0],textBubble1[1],textBubble2[0],textBubble2[1])
+        img = ImageGrab.grab(textBubbleregion)
+
+        img.save(os.path.join("tmp","textbubble.jpg"))
         img.close()
+        img = cv2.imread(os.path.join("tmp","textbubble.jpg"))
+        os.remove(os.path.join("tmp","textbubble.jpg"))
+        final = img.copy()
+
+        # Filter out all text.
+        imgHSV = cv2.cvtColor(img,cv2.COLOR_BGR2HSV)
+        lower_black = np.array([0,0,13])
+        upper_black = np.array([0,0,240])
+        mask = cv2.inRange(imgHSV,lower_black,upper_black)
+
+        for i in range(len(mask)): # iterate each row
+            for px in range(len(mask[i])):
+        
+                if mask[i, px] == 255:
+                    #print(final[i][px])
+            
+                    final[i,px] = (255,255,255) # Change pixel to white if it needs to be removed (part of mask)
+        gray = cv2.cvtColor(final, cv2.COLOR_BGR2GRAY)
+        blur = cv2.GaussianBlur(gray, (7, 7), 1)
+        imgCanny = cv2.Canny(blur, 400, 400//3)
+        
+        orders = []
+        contours, hierarchy = cv2.findContours(imgCanny, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_NONE)
+        print("CONTOURS FOUND: ", str(len(contours)))
+        
+        for cnt in contours:
+            area = cv2.contourArea(cnt)
+            print(area)
+            if area > 11.5: # Contours are detected in parts of food (discard it).
+                cv2.drawContours(final, cnt, -1, (0, 0, 0), 3)
+                x, y, w, h = cv2.boundingRect(cnt)
+                cv2.rectangle(final, (x,y), (x+w, y+h), (0,255,0), 2)
+                # Save each contour to a file
+                for i in range(3):
+                    temp = img[y:y+h, x:x+w]
+                    cv2.imwrite(os.path.join("tmp","tmp.jpg"),temp)
+                    diffs_unsorted, diffs = [], []
+                    for i in range(5): # loop through each food item.
+                        
+                        tmp_sum = 0
+                        for j in range(3):
+                            tmp_image = cv2.imread(os.path.join("images",images[i][j]+".jpg")) # Get the reference image
+                            
+                            tmp_img = cv2.imread(os.path.join("tmp","tmp.jpg")) # Get the image being compared.
+                            y,x,c = tmp_img.shape
+                            y1,x1,c1 = tmp_image.shape
+                            if y * x > y1 * x1:
+                                tmp_image = cv2.resize(tmp_image,(x,y)) # Change the reference image to fit the size of the image being compared to it.
+                            elif y * x < y1 * x1:
+                                tmp_img = cv2.resize(tmp_img,(x1,y1))
+                            
+                            
+                            tmp_sum += cv2.absdiff(tmp_image,tmp_img).sum()
+                        diffs.append(tmp_sum // 3)
+                        diffs_unsorted.append(tmp_sum // 3)
+                print("DIFFERENCES: " + str(diffs))
+                print("DIFFERENCES: ", str(images))
+                os.remove(os.path.join("tmp","tmp.jpg"))
+
+                #After the images are compared, get the most matching one and save it to a queue (just a list).
+                
+                
+                diffs.sort()
+                print("DIFFERENCES SORTED: " + str(diffs))
+                print("DIFFERENCES UNSORTED: " + str(diffs_unsorted))
+                print(diffs_unsorted.index(diffs[0]))
+         
+                orders.append(image_names[diffs_unsorted.index(diffs[0])]) # save the order by getting the index of the image with the least difference.
+                
+        
+        print("Give the customer: " + str(orders))
+
+        #for each order, click it
+        for i in range(len(orders)):
+            print(image_coords[orders[i]][0])
+            pyautogui.click(x=image_coords[orders[i]][0],y=image_coords[orders[i]][1]) # click on item on menu
+            time.sleep(1)
+
+        # click done button then wait for next customer
+        time.sleep(1)
+        pyautogui.click(x=done1[0],y=done1[1])
+
+        time.sleep(5)
+  
     
-    # Get text bubble image
-    textBubbleregion = (textBubble1[0],textBubble1[1],textBubble2[0],textBubble2[1])
-    img = ImageGrab.grab(textBubbleregion)
-
-    img.save(os.path.join("tmp","textbubble.jpg"))
-    img.close()
-    img = cv2.imread(os.path.join("tmp","textbubble.jpg"))
-    os.remove(os.path.join("tmp","textbubble.jpg"))
-    final = img.copy()
-
-    # Filter out all text.
-    imgHSV = cv2.cvtColor(img,cv2.COLOR_BGR2HSV)
-    lower_black = np.array([0,0,25])
-    upper_black = np.array([0,0,179])
-    mask = cv2.inRange(imgHSV,lower_black,upper_black)
-    res = cv2.bitwise_and(img,img,mask=mask)
-    for i in range(len(mask)): # iterate each row
-        for px in range(len(mask[i])):
-            if px == 1:
-                #print(final[i][px])
-                print('yes')
-                final[i,px] = [255,0,0] # Change pixel to white is it needs to be removed (part of mask)
-    cv2.imshow("img", img)
-    print(img)
-    cv2.imshow("mask",mask)
-    #print(mask)
-    cv2.imshow("res", res)
-    cv2.imshow("final",final)
-    cv2.waitKey(0)
