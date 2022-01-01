@@ -1,6 +1,6 @@
 print("Initializing...")
 from userInput import init, getTopOrderCoords, getBotOrderCoords
-from classifier import getOrderImg, getOrderItems, removeText
+from classifier import getOrderImg, getOrderItems, removeText, getDomColor
 import os
 
 
@@ -16,10 +16,14 @@ if __name__ == "__main__":
         cnt, item_coords = getOrderItems(img) # Get order items
         print("There is {} item(s)".format(cnt))
         print(item_coords)
-        if cnt == 3: # orders of three always have the following items.
+        """if cnt == 3: # orders of three always have the following items.
             orders.append("cola")
             orders.append("fries")
             # remove the items from the coords list since we don't need to scan them.
-            item_coords.pop(1)
             item_coords.pop(2)
+            item_coords.pop(1)
+            
+            for coord in item_coords:
+                color = getDomColor(img, coord) 
+                print(color)"""
         input("YES: ")
