@@ -4,6 +4,9 @@ import numpy as np
 import os, time
 from PIL import Image, ImageGrab
 
+from pynput.mouse import Button, Controller
+
+mouse = Controller()
 
 textBubble1 = textBubble2 = burger1 = burger2 = burger3 = fries =  cola = done1 = None
 
@@ -150,16 +153,31 @@ if __name__ == "__main__":
                 
         
         print("Give the customer: " + str(orders))
-
+        time.sleep(0.5)
+       
         #for each order, click it
         for i in range(len(orders)):
-            print(image_coords[orders[i]][0])
-            pyautogui.click(x=image_coords[orders[i]][0],y=image_coords[orders[i]][1]) # click on item on menu
-            time.sleep(1)
+            time.sleep(0.1)
+            with pyautogui.hold("alt"):
+                pyautogui.press("tab")
+            time.sleep(0.1)
+            mouse.position = image_coords[orders[i]]
+            time.sleep(0.1)
+            with pyautogui.hold("alt"):
+                pyautogui.press("tab")
+            time.sleep(0.1)
+            mouse.click(Button.left, 1)
+ 
 
-        # click done button then wait for next customer
-        time.sleep(1)
-        pyautogui.click(x=done1[0],y=done1[1])
+        time.sleep(0.1)
+        with pyautogui.hold("alt"):
+                pyautogui.press("tab")
+        time.sleep(0.1)
+        mouse.position = done1
+        with pyautogui.hold("alt"):
+                pyautogui.press("tab")
+        time.sleep(0.1)
+        mouse.click(Button.left, 1)
 
         time.sleep(5)
   
