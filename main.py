@@ -21,6 +21,7 @@ if __name__ == "__main__":
             img = getOrderImg(order_region) # Get the order
             img = removeText(img) # Remove any text
             cnt, item_coords, corners = getOrderItems(img) # Get order items
+            if cnt == 0: continue
             counter = 0
             while True:
                 if len(item_corners[counter]) != 0:
@@ -29,20 +30,37 @@ if __name__ == "__main__":
                     break
             item_corners[counter] = corners
         corners = []
-        try:
-            for i in range(len(item_corners[0])):
-                tmp_sum = 0
-                for j in range(repeats):
+        
+        for i in range(len(item_corners[counter])):
+            tmp_sum = 0
+            for j in range(repeats):
+                try:
                     tmp_sum += item_corners[j][i]
                     print("{} found adding to avg sum for item {}.".format(item_corners[j][i],i))
-                corners.append(tmp_sum // repeats) # get the average
+                except:
+                    pass
+            corners.append(tmp_sum // repeats) # get the average
 
-            print("There is {} item(s)".format(cnt))
-            print(item_coords)
-        except:
-            print("Scanning took too long, if this happened on the first customer, don't worry, but if this message takes too long then try reducing the amount of repeats.")
-        
-
+        print("There is {} item(s)".format(cnt))
+        print(item_coords)
+        flag = False
+        while True: # In case multiple false positives present, use a loop.
+            for i in range(len(item_coords)):
+                res = classifyShape(corners[i],"main",item_coords[i])
+                item_coords.pop(i)
+                if res == "fpos":
+                    
+                    print("False positive detected.")
+                    break
+                else:
+                    orders.append(res)
+                    flag = True
+                    break
+            if flag: break
+        if len(item_coords) > 0:
+            for coords in item_coords:
+                orders.append(classifyShape(corners[0],"side",coords))
+        """
         if cnt == 3: # orders of three always have the following items.
             orders.append("cola")
             orders.append("fries")
@@ -50,32 +68,50 @@ if __name__ == "__main__":
             
             print("Cola and fries automatically added.")
             print("Burger has {} corners".format(corners[0]))
+
             counter = 0 
             while True: # In case multiple false positives present, use a loop.
                 res = classifyShape(corners[counter],"main",item_coords[counter])
+                item_coords.pop(counter)
                 if res == "fpos":
                     print("False positive detected.")
                     counter += 1
                 else:
                     orders.append(res)
+                    orders.remove("cola")
+                    orders.remove("fries")
+                    orders.append(classifyShape(corners[1],"side",item_coords[counter]))
+                    item_coords.pop(counter)
                     break
+            if len(item_coords) > 0:
+                orders.append(classifyShape(corners[0],"side",item_coords[0]))
         
         elif cnt == 2:
             print("Burger has {} corners".format(corners[0]))
             orders.append(classifyShape(corners[0],"main",item_coords[0]))
  
             print("Side has {} corners".format(corners[1]))
-            orders.append(classifyShape(corners[1],"side",item_coords[0]))
+            orders.append(classifyShape(corners[1],"side",item_coords[1]))
 
         elif cnt == 1:
             print("Burger has {} corners".format(corners[0]))
             orders.append(classifyShape(corners[0],"main",item_coords[0]))
-        elif cnt == 4:
-            continue # Something went wrong, trying again...
-        else:
+        elif cnt == 0:
             print("No customer")
+            pass # Something went wrong, trying again...
+        else:
+            """
+
         os.remove(os.path.join('tmp','orders.jpg'))
         print(orders)
         time.sleep(0.5)
-        execMenu(orders,menu_coords)
+        try:
+            temp = orders.index("fpos")
+            print("fpos in orders")
+            while orders.index("fpos") != -1:
+                orders.remove("fpos")
+            execMenu(orders,menu_coords)
+        except:
+            execMenu(orders,menu_coords)
+
         time.sleep(5)

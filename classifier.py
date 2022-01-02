@@ -16,7 +16,7 @@ def getOrderImg(order_region):
 def removeText(img): # Get rid of the plus sign (if any)
 
     imgHSV = cv2.cvtColor(img,cv2.COLOR_BGR2HSV)
-    lower_black = np.array([0,0,1]) # OG: 10
+    lower_black = np.array([0,0,3]) # OG: 10
     upper_black = np.array([0,0,255]) # OG: 250
     mask = cv2.inRange(imgHSV,lower_black,upper_black)
     
@@ -56,7 +56,7 @@ def getOrderItems(img):
 
         # Get corners in item (used to classify order item)
         peri = cv2.arcLength(cnt,True)
-        approx = cv2.approxPolyDP(cnt,0.01*peri,True)
+        approx = cv2.approxPolyDP(cnt,0.02*peri,True)
         objCorners = len(approx)
         item_corners.append(objCorners)
 
@@ -83,31 +83,84 @@ def getOrderItems(img):
 
 def classifyShape(sides, _class,coords):
     if _class == "side":
-        if sides <= 10:
-            return "cola"
-        else:
+        img = cv2.imread(os.path.join("tmp","orders.jpg"))
+        img = cv2.cvtColor(img,cv2.COLOR_BGR2RGB)
+        img = img[coords[1][0]:coords[1][1],coords[0][0]:coords[0][1]]
+        if img.shape[0] * img.shape[1] <= 500: # False positive, discard.
+            return "fpos"
+       
+        #plt.imshow(img, interpolation='none')
+        #plt.show() # UNCOMMENT this block to show the image on a graph (this operation is blocking).
+
+        colors = []
+        print(img.shape)
+        for i in range(img.shape[0]): # loop each row of pixels. 
+            for j in range(img.shape[1]): # loop each pixel in row
+                try:
+                    colors.append(img[i,j])
+                except:
+                    print('ok')
+
+        r_sum = 0
+        g_sum = 0
+        b_sum = 0
+        for color in colors:
+            r_sum += color[0]
+            g_sum += color[1]
+            b_sum += color[2]
+        prod = img.shape[0] * img.shape[1]
+        avg_color = [r_sum//prod,g_sum//prod,b_sum//prod]
+        print(avg_color)
+        if avg_color[2] > avg_color[0] and avg_color[2] > avg_color[1]:
             return "fries"
+        else:
+            return "cola"
+
     elif _class == "main":
         # Use color detetion
         img = cv2.imread(os.path.join("tmp","orders.jpg"))
         img = cv2.cvtColor(img,cv2.COLOR_BGR2RGB)
         img = img[coords[1][0]:coords[1][1],coords[0][0]:coords[0][1]]
-        if img.shape[0] * img.shape[1] <= 100: # False positive, discard.
+        if img.shape[0] * img.shape[1] <= 500: # False positive, discard.
             return "fpos"
-        """plt.imshow(img, interpolation='none')
-        plt.show()""" # UNCOMMENT this block to show the image on a graph (this operation is blocking).
-        r1,g1,b1 = img[28,59] # These exact colours were found by plotting the image on a graph (matplotlib).
-        r2,g2,b2 = img[28,63]
-        
+       
+        #plt.imshow(img, interpolation='none')
+        #plt.show() # UNCOMMENT this block to show the image on a graph (this operation is blocking).
+        try:
+            r1,g1,b1 = img[img.shape[0]- 26,img.shape[1] - 9] # This will allow the color to be detected no matter the player perpective.
+            r2,g2,b2 = img[img.shape[0]- 26,img.shape[1] - 5]
+        except: return "fpos"
         sum1 = int(r1) + int(g1) + int(b1)
         sum2 = int(r2) + int(g2) + int(b2)
         
         avg = (sum1 + sum2) // 2
         print(avg)
+        colors = []
+        print(img.shape)
+        for i in range(img.shape[0]): # loop each row of pixels. 
+            for j in range(img.shape[1]): # loop each pixel in row
+                try:
+                    colors.append(img[i,j])
+                except:
+                    print('ok')
+
+        r_sum = 0
+        g_sum = 0
+        b_sum = 0
+        for color in colors:
+            r_sum += color[0]
+            g_sum += color[1]
+            b_sum += color[2]
+        prod = img.shape[0] * img.shape[1]
+        avg_color = [r_sum//prod,g_sum//prod,b_sum//prod]
+        print(avg_color)
+        
+        if 200 < avg_color[0] and 185 < avg_color[1]:
+            return "burger3"
+
         if avg >= 100 and avg <= 300: # Should detect the meat in the burger
             return "burger1"
-        elif avg >= 475 and avg <= 700: # Should detect the cheese in the burger
+        else:
             return "burger2"
-        elif avg >= 300 and avg <= 400: # Should detect the bread in the burger
-            return "burger3"
-        input()
+        
+        
