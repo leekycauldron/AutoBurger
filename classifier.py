@@ -16,7 +16,7 @@ def removeText(img): # Get rid of the plus sign (if any)
 
     imgHSV = cv2.cvtColor(img,cv2.COLOR_BGR2HSV)
     lower_black = np.array([0,0,10])
-    upper_black = np.array([0,0,255])
+    upper_black = np.array([0,0,250])
     mask = cv2.inRange(imgHSV,lower_black,upper_black)
     
     for i in range(len(mask)): # iterate each row
@@ -29,7 +29,7 @@ def removeText(img): # Get rid of the plus sign (if any)
 
 def getOrderItems(img):
     gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
-    (thresh, gray) = cv2.threshold(gray, 230, 253, cv2.THRESH_BINARY)
+    (thresh, gray) = cv2.threshold(gray, 230, 255, cv2.THRESH_BINARY)
     gray_inv = cv2.bitwise_not(gray)
     im_floodfill = gray_inv.copy()
     h, w = gray.shape[:2]
@@ -39,8 +39,9 @@ def getOrderItems(img):
     final = cv2.bitwise_xor(gray,im_floodfill)
     
     blur = cv2.GaussianBlur(final,(9,9), 0)
-    imgCanny = cv2.Canny(blur, 100, 100//3)
+    imgCanny = cv2.Canny(final, 500, 500//3)
     
+  
 
     # Get number of contours (order items)
     contours, hierarchy = cv2.findContours(imgCanny, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_NONE)
@@ -53,7 +54,7 @@ def getOrderItems(img):
 
         # Get corners in item (used to classify order item)
         peri = cv2.arcLength(cnt,True)
-        approx = cv2.approxPolyDP(cnt,0.02*peri,True)
+        approx = cv2.approxPolyDP(cnt,0.01*peri,True)
         objCorners = len(approx)
         item_corners.append(objCorners)
 
@@ -78,11 +79,17 @@ def getOrderItems(img):
     return itm_cnt, item_coords, item_corners
 
 
-def classifyShape(sides,classify):
-    if classify == "side":
-        if sides <= 6:
+def classifyShape(sides, _class):
+    if _class == "side":
+        if sides <= 9:
             return "cola"
         else:
             return "fries"
-    elif classify == "burger":
-        return "burger"
+    elif _class == "main":
+        if sides <= 12:
+            return "burger2"
+        elif sides > 12 and sides <= 14:
+            return "burger1"
+        else:
+            return "burger3"
+

@@ -1,13 +1,14 @@
 print("Initializing...")
-from userInput import init, getTopOrderCoords, getBotOrderCoords
+from userInput import execMenu, init, getTopOrderCoords, getBotOrderCoords, getMenuCoords
 from classifier import getOrderImg, getOrderItems, removeText, classifyShape
-import os
+import os, time
 
 
 if __name__ == "__main__":
     #init()
     topCoords= getTopOrderCoords()
     botCoords = getBotOrderCoords()
+    menu_coords = getMenuCoords()
     order_region = (topCoords[0],topCoords[1],botCoords[0],botCoords[1])
     while 1: # Main Automation loop
         orders = []
@@ -27,17 +28,22 @@ if __name__ == "__main__":
             corners.pop(1)
             print("Cola and fries automatically added.")
             print("Burger has {} corners".format(corners[0]))
-            print(classifyShape(corners[0],"burger"))
+            orders.append(classifyShape(corners[0],"main"))
         
         elif cnt == 2:
             print("Burger has {} corners".format(corners[0]))
-            print(classifyShape(corners[0],"burger"))
+            orders.append(classifyShape(corners[0],"main"))
+ 
             print("Side has {} corners".format(corners[1]))
-            print(classifyShape(corners[1],"side"))
+            orders.append(classifyShape(corners[1],"side"))
 
         elif cnt == 1:
             print("Burger has {} corners".format(corners[0]))
-            print(classifyShape(corners[0],"burger"))
+            orders.append(classifyShape(corners[0],"main"))
+ 
         else:
             print("No customer")
-        input("YES: ")
+        print(orders)
+        time.sleep(0.5)
+        execMenu(orders,menu_coords)
+        time.sleep(5)
