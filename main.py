@@ -45,17 +45,19 @@ if __name__ == "__main__":
         print(item_coords)
         flag = False
         while True: # In case multiple false positives present, use a loop.
-            for i in range(len(item_coords)):
-                res = classifyShape(corners[i],"main",item_coords[i])
-                item_coords.pop(i)
-                if res == "fpos":
-                    
-                    print("False positive detected.")
-                    break
-                else:
-                    orders.append(res)
-                    flag = True
-                    break
+            if len(item_coords) > 0:
+                for i in range(len(item_coords)):
+                    res = classifyShape(corners[i],"main",item_coords[i])
+                    item_coords.pop(i)
+                    if res == "fpos":
+                        
+                        print("False positive detected.")
+                        break
+                    else:
+                        orders.append(res)
+                        flag = True
+                        break
+            else: break  
             if flag: break
         if len(item_coords) > 0:
             for coords in item_coords:
