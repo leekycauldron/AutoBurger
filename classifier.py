@@ -1,21 +1,22 @@
 import cv2, os
-from PIL import ImageGrab
+from PIL import ImageGrab, Image
 import numpy as np
+import matplotlib.pyplot as plt
 
 def getOrderImg(order_region):
     # Get the customer's order and return the image of it.
     img = ImageGrab.grab(order_region)
-    img.save(os.path.join("tmp","order.jpg"))
+    img.save(os.path.join("tmp","orders.jpg"))
     img.close()
 
-    img = cv2.imread(os.path.join("tmp","order.jpg"))
-    os.remove(os.path.join("tmp","order.jpg"))
+    img = cv2.imread(os.path.join("tmp","orders.jpg"))
+    
     return img
 
 def removeText(img): # Get rid of the plus sign (if any)
 
     imgHSV = cv2.cvtColor(img,cv2.COLOR_BGR2HSV)
-    lower_black = np.array([0,0,5]) # OG: 10
+    lower_black = np.array([0,0,1]) # OG: 10
     upper_black = np.array([0,0,255]) # OG: 250
     mask = cv2.inRange(imgHSV,lower_black,upper_black)
     
@@ -39,7 +40,8 @@ def getOrderItems(img):
     final = cv2.bitwise_xor(gray,im_floodfill)
     
     blur = cv2.GaussianBlur(final,(3,3), 0)
-    imgCanny = cv2.Canny(blur, 500, 500//3)
+    dil = cv2.dilate(final,(7,7),iterations=1)
+    imgCanny = cv2.Canny(dil, 500, 500//3)
     
   
 
@@ -69,27 +71,43 @@ def getOrderItems(img):
     cv2.imshow('img',img)
     cv2.imshow('greyinv',gray_inv)
     cv2.imshow('fillog',im_floodfill)
-    
+    cv2.imshow('dilate',dil)
     cv2.imshow("fill",final)
     cv2.imshow('blur',blur)
     cv2.imshow('canny',imgCanny)
 
-    cv2.waitKey(5)
+    cv2.waitKey(1)
 
     return itm_cnt, item_coords, item_corners
 
 
-def classifyShape(sides, _class):
+def classifyShape(sides, _class,coords):
     if _class == "side":
-        if sides <= 9:
+        if sides <= 10:
             return "cola"
         else:
             return "fries"
     elif _class == "main":
-        if sides <= 12:
-            return "burger2"
-        elif sides > 12 and sides <= 14:
+        # Use color detetion
+        img = cv2.imread(os.path.join("tmp","orders.jpg"))
+        img = cv2.cvtColor(img,cv2.COLOR_BGR2RGB)
+        img = img[coords[1][0]:coords[1][1],coords[0][0]:coords[0][1]]
+        if img.shape[0] * img.shape[1] <= 100: # False positive, discard.
+            return "fpos"
+        """plt.imshow(img, interpolation='none')
+        plt.show()""" # UNCOMMENT this block to show the image on a graph (this operation is blocking).
+        r1,g1,b1 = img[28,59] # These exact colours were found by plotting the image on a graph (matplotlib).
+        r2,g2,b2 = img[28,63]
+        
+        sum1 = int(r1) + int(g1) + int(b1)
+        sum2 = int(r2) + int(g2) + int(b2)
+        
+        avg = (sum1 + sum2) // 2
+        print(avg)
+        if avg >= 100 and avg <= 300: # Should detect the meat in the burger
             return "burger1"
-        else:
+        elif avg >= 475 and avg <= 700: # Should detect the cheese in the burger
+            return "burger2"
+        elif avg >= 300 and avg <= 400: # Should detect the bread in the burger
             return "burger3"
-
+        input()

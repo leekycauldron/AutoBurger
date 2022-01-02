@@ -1,7 +1,7 @@
 print("Initializing...")
 from userInput import execMenu, init, getTopOrderCoords, getBotOrderCoords, getMenuCoords, getRepeats
 from classifier import getOrderImg, getOrderItems, removeText, classifyShape
-import os, time
+import os, time, cv2
 
 
 if __name__ == "__main__":
@@ -16,6 +16,7 @@ if __name__ == "__main__":
         cnt = 0 
         item_coords = 0
         item_corners = [[] for _ in range(repeats)]
+        img = []
         for i in range(repeats):
             img = getOrderImg(order_region) # Get the order
             img = removeText(img) # Remove any text
@@ -33,39 +34,47 @@ if __name__ == "__main__":
                 tmp_sum = 0
                 for j in range(repeats):
                     tmp_sum += item_corners[j][i]
+                    print("{} found adding to avg sum for item {}.".format(item_corners[j][i],i))
                 corners.append(tmp_sum // repeats) # get the average
 
             print("There is {} item(s)".format(cnt))
             print(item_coords)
         except:
             print("Scanning took too long, if this happened on the first customer, don't worry, but if this message takes too long then try reducing the amount of repeats.")
-
+        
 
         if cnt == 3: # orders of three always have the following items.
             orders.append("cola")
             orders.append("fries")
             # remove the items from the coords list since we don't need to scan them.
-            item_coords.pop(2)
-            item_coords.pop(1)
-            corners.pop(2)
-            corners.pop(1)
+            
             print("Cola and fries automatically added.")
             print("Burger has {} corners".format(corners[0]))
-            orders.append(classifyShape(corners[0],"main"))
+            counter = 0 
+            while True: # In case multiple false positives present, use a loop.
+                res = classifyShape(corners[counter],"main",item_coords[counter])
+                if res == "fpos":
+                    print("False positive detected.")
+                    counter += 1
+                else:
+                    orders.append(res)
+                    break
         
         elif cnt == 2:
             print("Burger has {} corners".format(corners[0]))
-            orders.append(classifyShape(corners[0],"main"))
+            orders.append(classifyShape(corners[0],"main",item_coords[0]))
  
             print("Side has {} corners".format(corners[1]))
-            orders.append(classifyShape(corners[1],"side"))
+            orders.append(classifyShape(corners[1],"side",item_coords[0]))
 
         elif cnt == 1:
             print("Burger has {} corners".format(corners[0]))
-            orders.append(classifyShape(corners[0],"main"))
- 
+            orders.append(classifyShape(corners[0],"main",item_coords[0]))
+        elif cnt == 4:
+            continue # Something went wrong, trying again...
         else:
             print("No customer")
+        os.remove(os.path.join('tmp','orders.jpg'))
         print(orders)
         time.sleep(0.5)
         execMenu(orders,menu_coords)
