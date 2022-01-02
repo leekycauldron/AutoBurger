@@ -23,15 +23,15 @@ def getBotOrderCoords():
 def getMenuCoords():
     input("Place your cursors on the single cheeseburger on the menu\nHIT *ENTER* WHEN DONE...")
     menu_coords["burger1"] = pyautogui.position()
-    input("Place your cursors on the single cheeseburger on the menu\nHIT *ENTER* WHEN DONE...")
+    input("Place your cursors on the double cheeseburger on the menu\nHIT *ENTER* WHEN DONE...")
     menu_coords["burger2"] = pyautogui.position()
-    input("Place your cursors on the single cheeseburger on the menu\nHIT *ENTER* WHEN DONE...")
+    input("Place your cursors on the deluxe cheeseburger on the menu\nHIT *ENTER* WHEN DONE...")
     menu_coords["burger3"] = pyautogui.position()
-    input("Place your cursors on the single cheeseburger on the menu\nHIT *ENTER* WHEN DONE...")
+    input("Place your cursors on the fries on the menu\nHIT *ENTER* WHEN DONE...")
     menu_coords["fries"] = pyautogui.position()
-    input("Place your cursors on the single cheeseburger on the menu\nHIT *ENTER* WHEN DONE...")
+    input("Place your cursors on the cola on the menu\nHIT *ENTER* WHEN DONE...")
     menu_coords["cola"] = pyautogui.position()
-    input("Place your cursors on the single cheeseburger on the menu\nHIT *ENTER* WHEN DONE...")
+    input("Place your cursors on the done button on the menu\nHIT *ENTER* WHEN DONE...")
     menu_coords["done"] = pyautogui.position()
 
     return menu_coords
@@ -63,4 +63,6 @@ def execMenu(orders, menu_coords): # Execute items
             time.sleep(0.1)
             pyautogui.press("tab")
     time.sleep(0.1)
-    
+
+def getRepeats():
+    return int(input("How many times should the robot check the order to verify it is right?\n (higher is more accurate but takes more time)..."))
