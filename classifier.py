@@ -15,8 +15,8 @@ def getOrderImg(order_region):
 def removeText(img): # Get rid of the plus sign (if any)
 
     imgHSV = cv2.cvtColor(img,cv2.COLOR_BGR2HSV)
-    lower_black = np.array([0,0,10])
-    upper_black = np.array([0,0,250])
+    lower_black = np.array([0,0,10]) # OG: 10
+    upper_black = np.array([0,0,254]) # OG: 250
     mask = cv2.inRange(imgHSV,lower_black,upper_black)
     
     for i in range(len(mask)): # iterate each row
@@ -38,8 +38,8 @@ def getOrderItems(img):
     
     final = cv2.bitwise_xor(gray,im_floodfill)
     
-    blur = cv2.GaussianBlur(final,(9,9), 0)
-    imgCanny = cv2.Canny(final, 500, 500//3)
+    blur = cv2.GaussianBlur(final,(3,3), 0)
+    imgCanny = cv2.Canny(blur, 500, 500//3)
     
   
 
