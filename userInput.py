@@ -63,6 +63,3 @@ def execMenu(orders, menu_coords): # Execute items
             time.sleep(0.1)
             pyautogui.press("tab")
     time.sleep(0.1)
-
-def getRepeats():
-    return int(input("How many times should the robot check the order to verify it is right?\n (higher is more accurate but takes more time)..."))
