@@ -40,6 +40,9 @@ if __name__ == "__main__":
                 orders.append(classifyShape("side",coords))
 
         os.remove(os.path.join('tmp','orders.jpg'))
+        
+        # There are never duplicates so in case there are, change the way the orders are stored to remove duplicates.
+        orders = set(orders)
         print(orders)
         time.sleep(0.5)
         try:
