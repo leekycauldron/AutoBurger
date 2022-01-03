@@ -43,6 +43,7 @@ if __name__ == "__main__":
         
         # There are never duplicates so in case there are, change the way the orders are stored to remove duplicates.
         orders = set(orders)
+        orders = list(orders) # Change set back to list since set is not subscriptable.
         print(orders)
         time.sleep(0.5)
         try:
